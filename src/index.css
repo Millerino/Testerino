@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+/* Premium, calm color palette */
+@theme {
+  --color-sage-50: #f6f7f6;
+  --color-sage-100: #e3e7e3;
+  --color-sage-200: #c7d0c7;
+  --color-sage-300: #a3b1a3;
+  --color-sage-400: #7a8f7a;
+  --color-sage-500: #5f755f;
+  --color-sage-600: #4b5e4b;
+  --color-sage-700: #3d4c3d;
+  --color-sage-800: #333f33;
+  --color-sage-900: #2b352b;
+
+  --color-cream-50: #fdfcfb;
+  --color-cream-100: #f9f7f4;
+  --color-cream-200: #f3efe9;
+
+  --color-gold-400: #d4a574;
+  --color-gold-500: #c4956a;
+  --color-gold-600: #a67c52;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-cream-50);
+  color: var(--color-sage-800);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth transitions for interactive elements */
+button, input, textarea {
+  transition: all 0.2s ease;
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-sage-400);
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cream-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-sage-300);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-sage-400);
+}
