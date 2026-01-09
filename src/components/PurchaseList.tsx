@@ -4,7 +4,6 @@ import { CATEGORIES } from '../types';
 import {
   formatCurrency,
   formatDate,
-  yearsBetween,
   calculateFutureValue,
   INVESTMENT_STRATEGIES,
   type StrategyKey,
@@ -49,12 +48,13 @@ export function PurchaseList({ purchases, strategy, onRemove }: PurchaseListProp
       </div>
       <div className="space-y-3">
         {sortedPurchases.map(purchase => {
-          const years = yearsBetween(purchase.date);
-          const investedValue = calculateFutureValue(purchase.price, effectiveRate, Math.max(years, 0));
           const isRemoving = removingId === purchase.id;
           const category = purchase.category ? CATEGORIES[purchase.category] : null;
-          const gain = investedValue - purchase.price;
-          const gainPercent = ((gain / purchase.price) * 100).toFixed(1);
+
+          // Show 5-year projected value (more meaningful than current value for recent purchases)
+          const projectedValue5yr = calculateFutureValue(purchase.price, effectiveRate, 5);
+          const projectedGain = projectedValue5yr - purchase.price;
+          const projectedGainPercent = ((projectedGain / purchase.price) * 100).toFixed(0);
 
           return (
             <div
@@ -94,11 +94,6 @@ export function PurchaseList({ purchases, strategy, onRemove }: PurchaseListProp
 
                   <p className="text-sage-400 text-sm mt-1">
                     {formatDate(purchase.date)}
-                    {years > 0 && (
-                      <span className="text-sage-300 ml-2">
-                        • {years < 1 ? `${Math.round(years * 12)} months` : `${years.toFixed(1)} years`} ago
-                      </span>
-                    )}
                   </p>
 
                   {purchase.note && (
@@ -109,21 +104,19 @@ export function PurchaseList({ purchases, strategy, onRemove }: PurchaseListProp
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {/* Investment Value */}
+                  {/* 5-Year Projected Value */}
                   <div className="text-right">
                     <p
                       className="font-medium text-sm"
                       style={{ color: strat.color }}
                     >
-                      {formatCurrency(investedValue)}
+                      {formatCurrency(projectedValue5yr)}
                     </p>
-                    {gain > 0 && (
-                      <p className="text-green-600 text-xs">
-                        +{gainPercent}%
-                      </p>
-                    )}
+                    <p className="text-green-600 text-xs">
+                      +{projectedGainPercent}%
+                    </p>
                     <p className="text-sage-400 text-xs">
-                      if invested
+                      in 5 years
                     </p>
                   </div>
 
