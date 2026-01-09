@@ -12,7 +12,7 @@ interface SavingsOverviewProps {
   strategy: StrategyKey;
 }
 
-function AnimatedCounter({ value, prefix = '', suffix = '' }: { value: number; prefix?: string; suffix?: string }) {
+function AnimatedCounter({ value }: { value: number }) {
   const [displayValue, setDisplayValue] = useState(0);
   const previousValue = useRef(0);
 
@@ -41,11 +41,7 @@ function AnimatedCounter({ value, prefix = '', suffix = '' }: { value: number; p
     previousValue.current = value;
   }, [value]);
 
-  return (
-    <span>
-      {prefix}{formatCurrency(displayValue)}{suffix}
-    </span>
-  );
+  return <span>{formatCurrency(displayValue)}</span>;
 }
 
 export function SavingsOverview({ purchases, strategy }: SavingsOverviewProps) {
@@ -55,9 +51,18 @@ export function SavingsOverview({ purchases, strategy }: SavingsOverviewProps) {
   );
 
   const strat = INVESTMENT_STRATEGIES[strategy];
-  const gains = totals.currentInvestmentValue - totals.totalSaved;
-  const gainsPercent = totals.totalSaved > 0
-    ? ((gains / totals.totalSaved) * 100).toFixed(1)
+
+  // Use 5-year projection as the main display value (more meaningful than current value)
+  const projectedValue = totals.projectedValue5yr;
+  const projectedGains = projectedValue - totals.totalSaved;
+  const projectedGainsPercent = totals.totalSaved > 0
+    ? ((projectedGains / totals.totalSaved) * 100).toFixed(1)
+    : '0';
+
+  // Also calculate 10-year gains for the projection card
+  const gains10yr = totals.projectedValue10yr - totals.totalSaved;
+  const gains10yrPercent = totals.totalSaved > 0
+    ? ((gains10yr / totals.totalSaved) * 100).toFixed(0)
     : '0';
 
   if (purchases.length === 0) {
@@ -106,7 +111,7 @@ export function SavingsOverview({ purchases, strategy }: SavingsOverviewProps) {
           </p>
         </div>
 
-        {/* Investment Value */}
+        {/* 5-Year Projected Value */}
         <div
           className="rounded-xl p-5 border"
           style={{
@@ -119,26 +124,26 @@ export function SavingsOverview({ purchases, strategy }: SavingsOverviewProps) {
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: strat.color }}
             />
-            <p className="text-sage-500 text-sm">If Invested ({strat.name})</p>
+            <p className="text-sage-500 text-sm">In 5 Years ({strat.name})</p>
           </div>
           <p
             className="text-4xl md:text-5xl font-light"
             style={{ color: strat.color }}
           >
-            <AnimatedCounter value={totals.currentInvestmentValue} />
+            <AnimatedCounter value={projectedValue} />
           </p>
           <div className="flex items-center gap-2 mt-2">
             <span
               className={`text-sm font-medium px-2 py-0.5 rounded-full ${
-                gains >= 0
+                projectedGains >= 0
                   ? 'bg-green-100 text-green-700'
                   : 'bg-red-100 text-red-700'
               }`}
             >
-              {gains >= 0 ? '+' : ''}{gainsPercent}%
+              {projectedGains >= 0 ? '+' : ''}{projectedGainsPercent}%
             </span>
             <span className="text-sage-400 text-sm">
-              {gains >= 0 ? '+' : ''}{formatCurrency(gains)} gains
+              {projectedGains >= 0 ? '+' : ''}{formatCurrency(projectedGains)} potential gains
             </span>
           </div>
         </div>
@@ -146,12 +151,15 @@ export function SavingsOverview({ purchases, strategy }: SavingsOverviewProps) {
 
       {/* Future Projections */}
       <div className="bg-sage-50 rounded-xl p-4">
-        <p className="text-sage-600 text-sm font-medium mb-3">Future Growth Potential</p>
+        <p className="text-sage-600 text-sm font-medium mb-3">Growth Timeline</p>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
             <p className="text-sage-400 text-xs mb-1">1 Year</p>
             <p className="text-sage-700 font-medium">
               {formatCurrency(totals.projectedValue1yr)}
+            </p>
+            <p className="text-green-600 text-xs">
+              +{((totals.projectedValue1yr - totals.totalSaved) / totals.totalSaved * 100).toFixed(0)}%
             </p>
           </div>
           <div className="text-center border-x border-sage-200">
@@ -159,11 +167,17 @@ export function SavingsOverview({ purchases, strategy }: SavingsOverviewProps) {
             <p className="text-sage-700 font-medium">
               {formatCurrency(totals.projectedValue5yr)}
             </p>
+            <p className="text-green-600 text-xs">
+              +{projectedGainsPercent}%
+            </p>
           </div>
           <div className="text-center">
             <p className="text-sage-400 text-xs mb-1">10 Years</p>
             <p className="text-gold-600 font-semibold">
               {formatCurrency(totals.projectedValue10yr)}
+            </p>
+            <p className="text-green-600 text-xs font-medium">
+              +{gains10yrPercent}%
             </p>
           </div>
         </div>
