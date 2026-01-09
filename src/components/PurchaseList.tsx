@@ -1,16 +1,30 @@
 import { useState } from 'react';
 import type { Purchase } from '../types';
-import { formatCurrency, formatDate, yearsBetween, calculateFutureValue, ANNUAL_RETURN_RATE } from '../utils/investment';
+import { CATEGORIES } from '../types';
+import {
+  formatCurrency,
+  formatDate,
+  yearsBetween,
+  calculateFutureValue,
+  INVESTMENT_STRATEGIES,
+  type StrategyKey,
+} from '../utils/investment';
 
 interface PurchaseListProps {
   purchases: Purchase[];
+  strategy: StrategyKey;
   onRemove: (id: string) => void;
 }
 
-export function PurchaseList({ purchases, onRemove }: PurchaseListProps) {
+export function PurchaseList({ purchases, strategy, onRemove }: PurchaseListProps) {
   const [removingId, setRemovingId] = useState<string | null>(null);
 
   if (purchases.length === 0) return null;
+
+  const strat = INVESTMENT_STRATEGIES[strategy];
+  const effectiveRate = 'useHistorical' in strat && strat.useHistorical
+    ? 0.10
+    : strat.rate;
 
   const handleRemove = (id: string) => {
     setRemovingId(id);
@@ -20,16 +34,27 @@ export function PurchaseList({ purchases, onRemove }: PurchaseListProps) {
     }, 200);
   };
 
+  // Sort by date, newest first
+  const sortedPurchases = [...purchases].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
   return (
     <div className="mb-6">
-      <h2 className="text-sage-600 text-sm font-medium mb-3 px-1">
-        Your Wins
-      </h2>
+      <div className="flex items-center justify-between mb-4 px-1">
+        <h2 className="text-sage-700 font-medium">Your Wins</h2>
+        <span className="text-sage-400 text-sm">
+          {purchases.length} {purchases.length === 1 ? 'item' : 'items'}
+        </span>
+      </div>
       <div className="space-y-3">
-        {purchases.map(purchase => {
+        {sortedPurchases.map(purchase => {
           const years = yearsBetween(purchase.date);
-          const investedValue = calculateFutureValue(purchase.price, ANNUAL_RETURN_RATE, years);
+          const investedValue = calculateFutureValue(purchase.price, effectiveRate, Math.max(years, 0));
           const isRemoving = removingId === purchase.id;
+          const category = purchase.category ? CATEGORIES[purchase.category] : null;
+          const gain = investedValue - purchase.price;
+          const gainPercent = ((gain / purchase.price) * 100).toFixed(1);
 
           return (
             <div
@@ -37,39 +62,72 @@ export function PurchaseList({ purchases, onRemove }: PurchaseListProps) {
               className={`
                 bg-white rounded-xl shadow-sm border border-sage-100 p-4
                 transition-all duration-200
-                ${isRemoving ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}
+                hover:shadow-md hover:border-sage-200
+                ${isRemoving ? 'opacity-0 scale-95 -translate-x-4' : 'opacity-100 scale-100'}
               `}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
+                  {/* Category & Item */}
+                  <div className="flex items-center gap-2 mb-1">
+                    {category && (
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: `${category.color}20`,
+                          color: category.color,
+                        }}
+                      >
+                        {category.emoji} {category.label}
+                      </span>
+                    )}
+                  </div>
+
                   <div className="flex items-baseline gap-2 flex-wrap">
-                    <span className="font-medium text-sage-700 truncate">
+                    <span className="font-medium text-sage-700">
                       {purchase.item}
                     </span>
                     <span className="text-sage-500 font-light">
                       {formatCurrency(purchase.price)}
                     </span>
                   </div>
-                  <p className="text-sage-400 text-sm mt-0.5">
+
+                  <p className="text-sage-400 text-sm mt-1">
                     {formatDate(purchase.date)}
+                    {years > 0 && (
+                      <span className="text-sage-300 ml-2">
+                        • {years < 1 ? `${Math.round(years * 12)} months` : `${years.toFixed(1)} years`} ago
+                      </span>
+                    )}
                   </p>
+
                   {purchase.note && (
-                    <p className="text-sage-500 text-sm mt-2 italic">
+                    <p className="text-sage-500 text-sm mt-2 italic bg-cream-50 rounded-lg p-2">
                       "{purchase.note}"
                     </p>
                   )}
                 </div>
 
                 <div className="flex items-center gap-3">
+                  {/* Investment Value */}
                   <div className="text-right">
-                    <p className="text-gold-600 font-medium text-sm">
+                    <p
+                      className="font-medium text-sm"
+                      style={{ color: strat.color }}
+                    >
                       {formatCurrency(investedValue)}
                     </p>
+                    {gain > 0 && (
+                      <p className="text-green-600 text-xs">
+                        +{gainPercent}%
+                      </p>
+                    )}
                     <p className="text-sage-400 text-xs">
                       if invested
                     </p>
                   </div>
 
+                  {/* Remove Button */}
                   <button
                     onClick={() => handleRemove(purchase.id)}
                     className="

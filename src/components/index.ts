@@ -3,3 +3,4 @@ export { AddPurchaseForm } from './AddPurchaseForm';
 export { SavingsOverview } from './SavingsOverview';
 export { PurchaseList } from './PurchaseList';
 export { InvestmentChart } from './InvestmentChart';
+export { StrategySelector } from './StrategySelector';
